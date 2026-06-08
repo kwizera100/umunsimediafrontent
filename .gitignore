@@ -28,3 +28,5 @@ UMUNSI WEBSITE/
 __MACOSX/
 test_clone/
 temp_user_repo/
+.vercel
+.env*.local
