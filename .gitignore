@@ -30,3 +30,6 @@ test_clone/
 temp_user_repo/
 .vercel
 .env*.local
+dist/
+*.tar.gz
+chunk*.txt
