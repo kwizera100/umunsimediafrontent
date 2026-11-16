@@ -3,8 +3,8 @@ import React, { useMemo, useState } from 'react';
 // Builds a smooth scalloped seal (Facebook-style verified rosette):
 // alternating outer/inner radius points joined by quadratic curves
 // so peaks and valleys are both rounded.
-const buildSealPath = (points = 14) => {
-  const cx = 12, cy = 12, rOuter = 10.9, rInner = 8.9;
+const buildSealPath = (points = 12) => {
+  const cx = 12, cy = 12, rOuter = 11.8, rInner = 8.9;
   const pts = [];
   for (let i = 0; i < points * 2; i++) {
     const r = i % 2 === 0 ? rOuter : rInner;

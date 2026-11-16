@@ -142,7 +142,7 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
         .catch(() => {});
 
       // Load initial content
-      loadTabContent("posts");
+      loadTabContent("posts", userData);
     } catch (err) {
       console.error("Error loading profile:", err);
       setError("Failed to load profile");
@@ -152,8 +152,9 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
     }
   };
 
-  const loadTabContent = async (tab) => {
-    if (!profileUser) return;
+  const loadTabContent = async (tab, userOverride) => {
+    const targetUser = userOverride || profileUser;
+    if (!targetUser) return;
 
     try {
       setLoadingContent(true);
@@ -161,12 +162,12 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
       switch (tab) {
         case "posts":
           const postsData = await publicProfileService.getUserPosts(
-            profileUser.id
+            targetUser.id
           );
           setPosts(postsData);
           // Combine posts and reposts for feed-like view
           const repostsData = await publicProfileService.getUserReposts(
-            profileUser.id
+            targetUser.id
           );
           setReposts(repostsData);
           const combinedPosts = [...postsData, ...repostsData].sort(
@@ -178,7 +179,7 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
           break;
         case "reposts": {
           const onlyRepostsData = await publicProfileService.getUserReposts(
-            profileUser.id
+            targetUser.id
           );
           setReposts(onlyRepostsData);
           setAllPosts(onlyRepostsData);
@@ -186,16 +187,16 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
         }
         case "articles":
           const articlesData = await publicProfileService.getUserArticles(
-            profileUser.id
+            targetUser.id
           );
           setArticles(articlesData);
           break;
         case "badges":
           const [badgesData, rewardsData, certificatesData] = await Promise.all(
             [
-              badgeService.getUserBadges(profileUser.id),
-              badgeService.getUserRewards(profileUser.id),
-              certificateService.getUserCertificates(profileUser.id),
+              badgeService.getUserBadges(targetUser.id),
+              badgeService.getUserRewards(targetUser.id),
+              certificateService.getUserCertificates(targetUser.id),
             ]
           );
           setBadges(badgesData);
@@ -506,14 +507,6 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
                       alt={profileUser.firstName}
                       className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 object-cover"
                     />
-                    {/* Verification Badge */}
-                    {profileUser.plan === "PREMIUM" &&
-                      profileUser.planExpiresAt &&
-                      new Date(profileUser.planExpiresAt) > new Date() && (
-                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                          <VerificationBadge size="lg" />
-                        </div>
-                      )}
                   </div>
                 </div>
 
