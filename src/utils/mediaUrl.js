@@ -12,6 +12,8 @@ export const resolveMediaUrl = (url, folder = 'posts') => {
   if (url.startsWith('uploads/')) return `${BASE_URL}/${url}`;
   // Already contains a subfolder like "posts/abc.jpg" or "avatars/abc.jpg"
   if (url.includes('/')) return `${BASE_URL}/uploads/${url}`;
+  // Bare filename: uploaded videos live in /uploads/videos regardless of caller default
+  if (/^videos-/i.test(url)) return `${BASE_URL}/uploads/videos/${url}`;
   return `${BASE_URL}/uploads/${folder}/${url}`;
 };
 
