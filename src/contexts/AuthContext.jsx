@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 import socketService from '../services/socketService';
+import pwaUtils from '../utils/pwa';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -13,7 +14,7 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -65,6 +66,19 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  // Subscribe to web push once authenticated (Facebook-style device notifications)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!('Notification' in window)) return;
+    // Don't re-prompt if the user already denied
+    if (Notification.permission === 'denied') return;
+
+    const t = setTimeout(() => {
+      pwaUtils.subscribeToPushNotifications().catch(() => {});
+    }, 3000); // slight delay so it doesn't fire during initial render
+    return () => clearTimeout(t);
+  }, [isAuthenticated]);
+
   // Register user
   const register = async (userData) => {
     try {
@@ -72,13 +86,29 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData);
       
       if (response.success) {
-        localStorage.setItem('token', response.data.token);
-        setUser(response.data.user);
-        setIsAuthenticated(true);
-        // Initialize WebSocket connection after registration
-        socketService.connect(response.data.token, response.data.user.id);
-        toast.success(response.message || 'Registration successful!');
-        return { success: true };
+        // Check if email verification is required
+        if (response.requiresEmailVerification) {
+          // Don't log user in - they need to verify email first
+          toast.success(response.message || 'Registration successful! Please check your email to verify your account.');
+          return { 
+            success: true, 
+            requiresEmailVerification: true,
+            message: response.message 
+          };
+        } else {
+          // Only log in if no email verification required (shouldn't happen with current setup)
+          localStorage.setItem('token', response.data.token);
+          setUser(response.data.user);
+          setIsAuthenticated(true);
+          socketService.connect(response.data.token, response.data.user.id);
+          
+          if (userData.isStudent) {
+            toast.success('Registration successful! Your student verification is pending admin approval.');
+          } else {
+            toast.success(response.message || 'Registration successful!');
+          }
+          return { success: true };
+        }
       } else {
         setError(response.message);
         return { success: false, message: response.message };
@@ -136,6 +166,8 @@ export const AuthProvider = ({ children }) => {
       
       if (response.success) {
         setUser(response.data);
+        // Persist updated user to localStorage for immediate UI refresh across app
+        localStorage.setItem('user', JSON.stringify(response.data));
         toast.success('Profile updated successfully');
         return { success: true };
       }
@@ -159,6 +191,12 @@ export const AuthProvider = ({ children }) => {
           ...prev,
           coverImage: response.data.coverImage
         }));
+        // Persist to localStorage as well
+        const updated = {
+          ...(JSON.parse(localStorage.getItem('user') || '{}')),
+          coverImage: response.data.coverImage,
+        };
+        localStorage.setItem('user', JSON.stringify(updated));
         toast.success('Cover image updated successfully');
         return { success: true };
       }
@@ -192,6 +230,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Refresh user data from server
+  const refreshUser = async () => {
+    try {
+      const profileResponse = await authService.getProfile();
+      if (profileResponse.success) {
+        setUser(profileResponse.data);
+        localStorage.setItem('user', JSON.stringify(profileResponse.data));
+        return { success: true, data: profileResponse.data };
+      }
+      return { success: false };
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -204,6 +258,7 @@ export const AuthProvider = ({ children }) => {
     updateCoverImage,
     searchUsers,
     getUserById,
+    refreshUser,
     socketService
   };
 
@@ -213,3 +268,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 }; 
+
+export { AuthProvider };

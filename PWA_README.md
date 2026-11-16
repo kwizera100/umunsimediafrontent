@@ -132,9 +132,9 @@ await pwaUtils.checkForUpdates();
 ```javascript
 // Share content
 await pwaUtils.share({
-  title: 'Check out Chart App!',
+  title: 'Check out Umunsi Media!',
   text: 'A great social media platform',
-  url: 'https://chartapp.com'
+  url: 'https://writer.umunsi.com'
 });
 ```
 

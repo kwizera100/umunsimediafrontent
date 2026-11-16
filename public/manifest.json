@@ -11,27 +11,28 @@
   "scope": "/",
   "lang": "en",
   "categories": ["social", "communication", "entertainment"],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://writer.umunsi.com/manifest.json"
+    }
+  ],
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-192x192.png",
+      "src": "/icon-192x192.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icon-512x512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/apple-touch-icon.png?v=2",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
@@ -114,7 +115,7 @@
   "handle_links": "preferred",
   "protocol_handlers": [
     {
-      "protocol": "web+chartapp",
+      "protocol": "web+umunsi",
       "url": "/%s"
     }
   ],
@@ -160,6 +161,6 @@
   ],
   "developer": {
     "name": "Chart App Team",
-    "url": "https://chartapp.com"
+    "url": "https://writer.umunsi.com"
   }
 } 

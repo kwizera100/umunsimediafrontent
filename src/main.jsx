@@ -1,17 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App.jsx';
 import pwaUtils from './utils/pwa.js';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import { NotificationProvider } from './contexts/NotificationContext.jsx';
 
 // Render animated dots background outside the app root
 if (!document.getElementById('animated-dots-bg')) {
   const bgDiv = document.createElement('div');
   bgDiv.id = 'animated-dots-bg';
   bgDiv.className = 'animated-dots-bg';
-  // Generate many dots with random positions and delays
   for (let i = 0; i < 36; i++) {
     const dot = document.createElement('div');
     dot.className = `animated-dot ${i % 2 === 0 ? 'yellow' : 'white'}`;
@@ -22,7 +21,7 @@ if (!document.getElementById('animated-dots-bg')) {
   }
   document.body.appendChild(bgDiv);
 }
-// Render a second layer of animated dots further in the background
+
 if (!document.getElementById('animated-dots-bg2')) {
   const bgDiv2 = document.createElement('div');
   bgDiv2.id = 'animated-dots-bg2';
@@ -45,8 +44,13 @@ pwaUtils.init().then(() => {
   console.error('PWA initialization failed:', error);
 });
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
+    </AuthProvider>
   </React.StrictMode>
 );

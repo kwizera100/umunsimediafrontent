@@ -1,5 +1,8 @@
 import React from 'react';
 import { HeartIcon, ChatBubbleOvalLeftIcon } from '@heroicons/react/24/outline';
+import Avatar from '../../components/Avatar';
+import UserDisplay from '../../components/UserDisplay';
+import resolveMediaUrl from '../../utils/mediaUrl';
 
 const Post = ({ post }) => {
   // Safety check for post data
@@ -20,17 +23,6 @@ const Post = ({ post }) => {
     return postUser.username || 'Unknown User';
   };
 
-  // Get user avatar
-  const getUserAvatar = (postUser) => {
-    if (!postUser) {
-      return 'https://ui-avatars.com/api/?name=Unknown&background=random';
-    }
-    if (postUser.avatar) {
-      return postUser.avatar;
-    }
-    return `https://ui-avatars.com/api/?name=${getUserDisplayName(postUser)}&background=random`;
-  };
-
   // Format the time
   const formatTime = (dateString) => {
     if (!dateString) return 'Unknown time';
@@ -48,21 +40,20 @@ const Post = ({ post }) => {
   return (
     <div className="bg-white rounded-lg shadow mb-6 w-full max-w-xl">
       <div className="flex items-center gap-3 px-4 pt-4">
-        <img 
-          src={getUserAvatar(post.author)} 
-          alt={getUserDisplayName(post.author)} 
-          className="w-10 h-10 rounded-full border object-cover" 
+        <UserDisplay 
+          user={post.author} 
+          size="md"
+          showUsername={false}
+          showVerification={true}
+          linkToProfile={true}
         />
-        <div>
-          <div className="font-semibold text-gray-800">{getUserDisplayName(post.author)}</div>
-          <div className="text-xs text-gray-400">{formatTime(post.createdAt)}</div>
-        </div>
+        <div className="text-xs text-gray-400">{formatTime(post.createdAt)}</div>
       </div>
       <div className="px-4 py-3 text-gray-800">
         {post.content}
       </div>
       {post.image && (
-        <img src={post.image} alt="post" className="w-full max-h-96 object-cover" />
+        <img src={resolveMediaUrl(post.image)} alt="post" className="w-full max-h-96 object-cover" />
       )}
       <div className="flex items-center gap-6 px-4 py-2 border-t text-gray-500">
         <button className="flex items-center gap-1 hover:text-red-500 transition">

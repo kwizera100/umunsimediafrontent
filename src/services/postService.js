@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://umuhuza.store/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://fggg.space/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -43,15 +43,45 @@ class PostService {
     try {
       const formData = new FormData();
       
-      // Add text fields
-      formData.append('content', postData.content);
+      // Add text fields (only when present - avoids sending literal "undefined")
+      if (postData.content && postData.content.trim()) {
+        formData.append('content', postData.content.trim());
+      }
       if (postData.location) {
         formData.append('location', postData.location);
       }
+      if (postData.feeling) {
+        formData.append('feeling', postData.feeling);
+      }
 
-      // Add file if present - use 'post' field name to match backend
-      if (postData.image) {
-        formData.append('post', postData.image);
+      // Add multiple images if present
+      if (postData.images && postData.images.length > 0) {
+        postData.images.forEach((image) => {
+          formData.append('images', image);
+        });
+      } 
+      // Single image - use the same 'images' field the backend expects
+      else if (postData.image) {
+        formData.append('images', postData.image);
+      }
+      
+      // Handle video with correct field name
+      if (postData.video) {
+        formData.append('videos', postData.video);
+      }
+      
+      // Handle multiple videos
+      if (postData.videos && postData.videos.length > 0) {
+        postData.videos.forEach((video) => {
+          formData.append('videos', video);
+        });
+      }
+
+      // Add tagged user IDs for mentions
+      if (postData.taggedUserIds && postData.taggedUserIds.length > 0) {
+        postData.taggedUserIds.forEach((userId) => {
+          formData.append('taggedUserIds', userId);
+        });
       }
 
       const response = await api.post('/posts', formData, {
@@ -139,21 +169,8 @@ class PostService {
   }
 
   // Update a post
-  async updatePost(postId, postData) {
+  async updatePost(postId, formData) {
     try {
-      const formData = new FormData();
-      
-      // Add text fields
-      formData.append('content', postData.content);
-      if (postData.location) {
-        formData.append('location', postData.location);
-      }
-
-      // Add file if present - use 'post' field name to match backend
-      if (postData.image) {
-        formData.append('post', postData.image);
-      }
-
       const response = await api.put(`/posts/${postId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -173,6 +190,58 @@ class PostService {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to share post' };
+    }
+  }
+
+  // Repost a post
+  async repostPost(postId) {
+    try {
+      const response = await api.post(`/posts/${postId}/repost`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to repost' };
+    }
+  }
+
+  // Quote repost a post
+  async quoteRepost(postId, content) {
+    try {
+      const response = await api.post(`/posts/${postId}/quote-repost`, { content });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to quote repost' };
+    }
+  }
+
+  // Toggle repost (like/unlike repost)
+  async toggleRepost(postId) {
+    try {
+      const response = await api.post(`/posts/${postId}/repost`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to toggle repost' };
+    }
+  }
+
+  // Save/Unsave a post
+  async toggleSavePost(postId) {
+    try {
+      const response = await api.post(`/posts/${postId}/save`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to save/unsave post' };
+    }
+  }
+
+  // Get saved posts
+  async getSavedPosts(skip = 0, limit = 10) {
+    try {
+      const response = await api.get('/posts/saved/all', {
+        params: { skip, limit }
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to get saved posts' };
     }
   }
 

@@ -1,6 +1,6 @@
-const CACHE_NAME = 'Umunsi-Media-v1.0.0';
-const STATIC_CACHE = 'Umunsi-Media-static-v1.0.0';
-const DYNAMIC_CACHE = 'Umunsi-Media-dynamic-v1.0.0';
+const CACHE_NAME = 'Umunsi-Media-v2.1.0';
+const STATIC_CACHE = 'Umunsi-Media-static-v2.1.0';
+const DYNAMIC_CACHE = 'Umunsi-Media-dynamic-v2.1.0';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -171,46 +171,61 @@ async function handleNavigationRequest(request) {
 // Push notification event
 self.addEventListener('push', (event) => {
   console.log('Service Worker: Push event received');
-  
+
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = { body: event.data ? event.data.text() : '' };
+  }
+
+  const title = payload.title || 'Umunsi Media';
   const options = {
-    body: event.data ? event.data.text() : 'New notification from Chart App',
-    icon: '/vite.svg',
-    badge: '/vite.svg',
+    body: payload.body || 'You have a new notification',
+    icon: payload.icon || '/icon-192x192.png',
+    badge: payload.badge || '/icon-192x192.png',
     vibrate: [100, 50, 100],
+    tag: payload.tag || 'umunsi-notification',
+    renotify: true,
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1
+      url: payload.url || '/'
     },
     actions: [
-      {
-        action: 'explore',
-        title: 'View',
-        icon: '/vite.svg'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/vite.svg'
-      }
+      { action: 'explore', title: 'View' },
+      { action: 'close', title: 'Close' }
     ]
   };
 
   event.waitUntil(
-    self.registration.showNotification('Chart App', options)
+    self.registration.showNotification(title, options)
   );
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
   console.log('Service Worker: Notification click received');
-  
-  event.notification.close();
 
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+
+  if (event.action === 'close') {
+    return;
   }
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Focus an existing app window if one is open
+      for (const client of clientList) {
+        if ('focus' in client) {
+          client.focus();
+          client.navigate(targetUrl);
+          return;
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
 });
 
 // Background sync event

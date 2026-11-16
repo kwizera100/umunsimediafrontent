@@ -14,7 +14,7 @@ class SocketService {
 
     // Use separate socket URL or fallback to API URL without /api
     const socketUrl = import.meta.env.VITE_SOCKET_URL || 
-                     (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://umuhuza.store');
+                     (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'https://fggg.space');
 
     this.socket = io(socketUrl, {
       auth: {
@@ -50,6 +50,13 @@ class SocketService {
       this.socket.onAny((event, ...args) => {
         console.log('Socket event received:', event, args);
       });
+    }
+  }
+
+  // Generic emit helper
+  emit(event, payload) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit(event, payload);
     }
   }
 
@@ -124,6 +131,30 @@ class SocketService {
     this.socket.on('post-comment-updated', (data) => {
       console.log('Post comment updated:', data);
       this.notifyListeners('post-comment-updated', data);
+    });
+
+    // Listen for message read receipts
+    this.socket.on('message-read', (data) => {
+      console.log('Message read receipt received:', data);
+      this.notifyListeners('message-read', data);
+    });
+
+    // Listen for user last seen updates
+    this.socket.on('user-last-seen', (data) => {
+      console.log('User last seen updated:', data);
+      this.notifyListeners('user-last-seen', data);
+    });
+
+    // Listen for new notifications
+    this.socket.on('new-notification', (data) => {
+      console.log('New notification received:', data);
+      this.notifyListeners('new-notification', data);
+    });
+
+    // Listen for notification updates
+    this.socket.on('notification-read', (data) => {
+      console.log('Notification read:', data);
+      this.notifyListeners('notification-read', data);
     });
   }
 
@@ -203,6 +234,20 @@ class SocketService {
   emitTyping(typingData) {
     if (this.socket && this.isConnected) {
       this.socket.emit('typing', typingData);
+    }
+  }
+
+  // Emit message read receipt
+  emitMessageRead(messageId, senderId) {
+    if (this.socket && this.isConnected) {
+      this.socket.emit('message-read', { messageId, senderId });
+    }
+  }
+
+  // Emit last seen update
+  emitLastSeen() {
+    if (this.socket && this.isConnected) {
+      this.socket.emit('last-seen-update');
     }
   }
 

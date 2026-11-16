@@ -1,5 +1,10 @@
 {
     "rewrites": [
-      { "source": "/(.*)", "destination": "/" }
+      { "source": "/p/:id", "destination": "/api/post/:id" },
+      { "source": "/a/:id", "destination": "/api/article/:id" },
+      { "source": "/c/:id", "destination": "/clubs/:id" },
+      { "source": "/u/:username", "destination": "/profile/:username" },
+      { "source": "/post/:id", "destination": "/api/post/:id" },
+      { "source": "/((?!api/).*)", "destination": "/" }
     ]
   }

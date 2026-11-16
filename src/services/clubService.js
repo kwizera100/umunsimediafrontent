@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://umuhuza.store/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://fggg.space/api';
 
 class ClubService {
   constructor() {
@@ -138,6 +138,37 @@ class ClubService {
     return this.makeRequest(url);
   }
 
+  // Like/unlike a club post
+  async togglePostLike(clubId, postId) {
+    const url = `${this.baseURL}/${clubId}/posts/${postId}/like`;
+    return this.makeRequest(url, {
+      method: 'POST',
+    });
+  }
+
+  // Get post comments
+  async getPostComments(clubId, postId, page = 1, limit = 10) {
+    const url = `${this.baseURL}/${clubId}/posts/${postId}/comments?page=${page}&limit=${limit}`;
+    return this.makeRequest(url);
+  }
+
+  // Add comment to post
+  async addPostComment(clubId, postId, content) {
+    const url = `${this.baseURL}/${clubId}/posts/${postId}/comments`;
+    return this.makeRequest(url, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  // Delete comment
+  async deleteComment(clubId, postId, commentId) {
+    const url = `${this.baseURL}/${clubId}/posts/${postId}/comments/${commentId}`;
+    return this.makeRequest(url, {
+      method: 'DELETE',
+    });
+  }
+
   // Get club categories
   getClubCategories() {
     return [
@@ -218,4 +249,4 @@ class ClubService {
   }
 }
 
-export default new ClubService(); 
+export default new ClubService();

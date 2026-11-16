@@ -72,10 +72,35 @@ class PWAUtils {
         return null;
       }
 
+      // Fetch the VAPID public key from the backend
+      const apiBase = import.meta.env.VITE_API_URL || 'https://fggg.space/api';
+      const keyRes = await fetch(`${apiBase}/push/vapid-key`);
+      const keyJson = await keyRes.json();
+      const vapidKey = keyJson?.data?.publicKey;
+      if (!vapidKey) {
+        console.warn('PWA: No VAPID key from server');
+        return null;
+      }
+
       const subscription = await this.swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(process.env.VITE_VAPID_PUBLIC_KEY || '')
+        applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
       });
+
+      // Register the subscription on the backend so pushes reach this device
+      try {
+        const token = localStorage.getItem('token');
+        await fetch(`${apiBase}/push/subscribe`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify(subscription)
+        });
+      } catch (e) {
+        console.warn('PWA: Failed to register subscription on server', e);
+      }
 
       console.log('PWA: Push subscription created', subscription);
       return subscription;
@@ -113,8 +138,8 @@ class PWAUtils {
 
     try {
       const notification = new Notification(title, {
-        icon: '/vite.svg',
-        badge: '/vite.svg',
+        icon: '/icon-192x192.png',
+        badge: '/icon-192x192.png',
         vibrate: [100, 50, 100],
         ...options
       });

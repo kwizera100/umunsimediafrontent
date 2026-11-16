@@ -3,6 +3,8 @@ import { XMarkIcon, HeartIcon, ChatBubbleOvalLeftIcon, ShareIcon, BookmarkIcon }
 import socketService from '../services/socketService';
 import postService from '../services/postService';
 import { useAuth } from '../contexts/AuthContext';
+import UserDisplay from './UserDisplay';
+import resolveMediaUrl from '../utils/mediaUrl';
 
 function buildCommentTree(flatComments) {
   const idToComment = {};
@@ -228,23 +230,20 @@ const PostModal = ({ post, onClose }) => {
         {/* Post details */}
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3 mb-2">
-            <img
-              src={getUserAvatar(post.author)}
-              alt={getUserDisplayName(post.author)}
-              className="w-10 h-10 rounded-full border object-cover"
+            <UserDisplay 
+              user={post.author} 
+              size="md"
+              showUsername={false}
+              showVerification={true}
+              linkToProfile={true}
             />
-            <div>
-              <div className="font-semibold text-gray-800 text-base">
-                {getUserDisplayName(post.author)}
-              </div>
-              <div className="text-xs text-gray-400">{formatTime(post.createdAt)}</div>
-            </div>
+            <div className="text-xs text-gray-400">{formatTime(post.createdAt)}</div>
           </div>
           <div className="text-gray-800 text-base mb-2">
             {post.content}
           </div>
           {post.image && (
-            <img src={post.image} alt="post" className="w-full max-h-96 object-cover rounded-xl mx-auto mb-2" />
+            <img src={resolveMediaUrl(post.image)} alt="post" className="w-full max-h-96 object-cover rounded-xl mx-auto mb-2" />
           )}
           {/* Post actions row */}
           <div className="flex items-center gap-6 py-2 border-t border-b text-gray-500 mb-2">

@@ -29,7 +29,5 @@ __MACOSX/
 test_clone/
 temp_user_repo/
 .vercel
+.env
 .env*.local
-dist/
-*.tar.gz
-chunk*.txt

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://umuhuza.store/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://fggg.space/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -41,12 +41,40 @@ class AuthService {
   // Register user
   async register(userData) {
     try {
-      const response = await api.post('/users/register', userData);
-      if (response.data.success) {
-        localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // If student registration with file upload
+      if (userData.isStudent && userData.studentReport) {
+        const formData = new FormData();
+        
+        // Add all text fields
+        Object.keys(userData).forEach(key => {
+          if (key !== 'studentReport' && userData[key] !== undefined) {
+            formData.append(key, userData[key]);
+          }
+        });
+
+        // Add student report file
+        formData.append('studentReport', userData.studentReport);
+
+        const response = await api.post('/users/register', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (response.data.success) {
+          localStorage.setItem('token', response.data.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        }
+        return response.data;
+      } else {
+        // Regular registration without file upload
+        const response = await api.post('/users/register', userData);
+        if (response.data.success) {
+          localStorage.setItem('token', response.data.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        }
+        return response.data;
       }
-      return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Registration failed' };
     }

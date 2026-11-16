@@ -73,7 +73,7 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
     };
 
     // Listen for story deletions
-    const handleStoryDeleted = (storyId) => {
+    const handleStoryDeletedSocket = (storyId) => {
       console.log('Real-time story deletion received:', storyId);
       // Remove the story from state
       setStories(prev => prev.filter(story => 
@@ -117,7 +117,7 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
     // Add event listeners
     socketService.on('new-story', handleNewStory);
     socketService.on('story-updated', handleStoryUpdated);
-    socketService.on('story-deleted', handleStoryDeleted);
+    socketService.on('story-deleted', handleStoryDeletedSocket);
     socketService.on('story-liked', handleStoryLiked);
     socketService.on('story-unliked', handleStoryUnliked);
 
@@ -125,7 +125,7 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
     return () => {
       socketService.off('new-story', handleNewStory);
       socketService.off('story-updated', handleStoryUpdated);
-      socketService.off('story-deleted', handleStoryDeleted);
+      socketService.off('story-deleted', handleStoryDeletedSocket);
       socketService.off('story-liked', handleStoryLiked);
       socketService.off('story-unliked', handleStoryUnliked);
     };
@@ -252,14 +252,32 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
           const isNewStory = isNewByTime || isNewById;
           
           // Add this story as a slide
-          storiesByUser[userId].slides.push({
-            type: story.content ? 'text' : 'image',
-            content: story.content || story.image,
-            duration: story.content ? 3000 : 5000,
+          const storySlide = {
+            type: story.type || (story.image ? 'image' : 'text'),
             storyId: story.id,
             createdAt: story.createdAt,
-            isNew: isNewStory
-          });
+            isNew: isNewStory,
+            isLiked: story.isLiked || false,
+            likesCount: story.likesCount || 0
+          };
+
+          if (story.type === 'text' || (!story.image && story.content)) {
+            // Text story - has content but no image
+            storySlide.content = story.content;
+            storySlide.textColor = story.textColor;
+            storySlide.backgroundColor = story.backgroundColor;
+            storySlide.fontSize = story.fontSize;
+            storySlide.textAlign = story.textAlign;
+            storySlide.fontFamily = story.fontFamily;
+            storySlide.duration = 4000;
+          } else {
+            // Image story - has image (may or may not have caption)
+            storySlide.content = story.image;
+            storySlide.caption = story.content; // Caption is stored in content field for image stories
+            storySlide.duration = 5000;
+          }
+
+          storiesByUser[userId].slides.push(storySlide);
           
           storiesByUser[userId].backendData.push(story);
         });
@@ -330,7 +348,25 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
     if (currentStoryIndex > 0) {
       setCurrentStoryIndex(currentStoryIndex - 1);
       setCurrentSlideIndex(0);
+    } else {
+      setCurrentStoryIndex(null);
+      setCurrentSlideIndex(0);
     }
+  };
+
+  // Handle manual story deletion from modal
+  const handleStoryDeleted = async (deletedStoryId) => {
+    console.log('Story deleted, refreshing stories...', deletedStoryId);
+    
+    // Close the modal first
+    setIsPreviewModalOpen(false);
+    setCurrentStoryIndex(null);
+    setCurrentSlideIndex(0);
+    
+    // Refresh the stories list to reflect the deletion
+    await fetchStories();
+    
+    toast.success('Story deleted successfully');
   };
 
   const handleNextSlide = () => {
@@ -352,11 +388,40 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-r from-gray-800/90 via-gray-700/90 to-gray-800/90 lg:from-gray-800 lg:via-gray-800 lg:to-gray-800 rounded-2xl lg:rounded-xl border border-gray-600/60 lg:border-gray-700 p-3 lg:p-4 mb-4 lg:mb-6 overflow-hidden backdrop-blur-sm">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-          <div className="flex-shrink-0">
-            <div className="w-16 h-16 rounded-full bg-gray-700 animate-pulse"></div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl lg:rounded-xl border border-gray-200 dark:border-gray-700 p-3 lg:p-4 mb-4 lg:mb-6 overflow-hidden shadow-sm dark:shadow-2xl">
+        <div className="flex items-center justify-between mb-3 lg:mb-4">
+          <div className="flex items-center space-x-2 lg:space-x-3">
+            <div className="p-1.5 lg:p-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg animate-pulse">
+              <Sparkles className="h-3 w-3 lg:h-4 lg:w-4 text-white" />
+            </div>
+            <div className="h-5 lg:h-6 w-16 lg:w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
+          <div className="flex items-center gap-1 lg:gap-2">
+            <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-gray-600 animate-pulse"></div>
+            <div className="w-8 h-3 bg-gray-700 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="flex gap-3 lg:gap-4 overflow-x-auto scrollbar-hide pb-2 px-1 lg:px-0">
+          {/* Create story skeleton */}
+          <div className="flex-shrink-0 flex flex-col items-center gap-2 lg:gap-3 w-16 lg:w-20">
+            <div className="w-full h-24 lg:h-32 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 animate-pulse border-2 border-gray-600 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer"></div>
+            </div>
+            <div className="h-3 w-12 bg-gray-700 rounded animate-pulse"></div>
+          </div>
+          {/* Story skeletons */}
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 flex flex-col items-center gap-2 lg:gap-3 w-16 lg:w-20">
+              <div className="w-full h-24 lg:h-32 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 animate-pulse border-2 border-purple-600/30 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/10 to-transparent -translate-x-full animate-shimmer" style={{animationDelay: `${i * 0.2}s`}}></div>
+                {/* Avatar skeleton */}
+                <div className="absolute top-1.5 left-1.5 w-5 h-5 lg:w-6 lg:h-6 bg-gray-600 rounded-full animate-pulse"></div>
+                {/* Like button skeleton */}
+                <div className="absolute bottom-1.5 right-1.5 w-6 h-6 lg:w-7 lg:h-7 bg-gray-600/80 rounded-full animate-pulse"></div>
+              </div>
+              <div className="h-3 w-10 bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -364,49 +429,94 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
 
   return (
     <>
-      <div className="bg-gradient-to-r from-gray-800/90 via-gray-700/90 to-gray-800/90 lg:from-gray-800 lg:via-gray-800 lg:to-gray-800 rounded-2xl lg:rounded-xl border border-gray-600/60 lg:border-gray-700 p-3 lg:p-4 mb-4 lg:mb-6 overflow-hidden backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl lg:rounded-xl border border-gray-200 dark:border-gray-700 p-3 lg:p-4 mb-4 lg:mb-6 overflow-hidden shadow-sm dark:shadow-2xl hover:shadow-md dark:hover:shadow-3xl transition-shadow duration-300">
         <div className="flex items-center justify-between mb-3 lg:mb-4">
           <div className="flex items-center space-x-2 lg:space-x-3">
-            <div className="p-1.5 lg:p-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg">
-              <Sparkles className="h-3 w-3 lg:h-4 lg:w-4 text-white" />
+            <div className="p-1.5 lg:p-2 bg-gradient-to-r from-pink-500 via-purple-600 to-blue-600 rounded-lg shadow-lg">
+              <Sparkles className="h-3 w-3 lg:h-4 lg:w-4 text-white animate-pulse" />
             </div>
-            <h3 className="text-base lg:text-lg font-semibold text-white">Stories</h3>
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">Stories</h3>
+            {isCheckingNewStories && (
+              <div className="ml-2 flex items-center gap-1">
+                <div className="w-1 h-1 bg-blue-400 rounded-full animate-ping"></div>
+                <div className="w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '0.2s'}}></div>
+                <div className="w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '0.4s'}}></div>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1 lg:gap-2">
-            <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-gray-400 hidden sm:block">
+            <div className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full transition-colors duration-300 ${
+              isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+            }`}></div>
+            <span className="text-xs text-gray-400 hidden sm:block font-medium">
               {isConnected ? 'Live' : 'Offline'}
             </span>
+            {newStoryIds.size > 0 && (
+              <div className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full animate-bounce">
+                {newStoryIds.size} new
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center">
-          {/* Left arrow - Hidden on mobile */}
+        
+        <div className="flex items-center relative">
+          {/* Enhanced Left arrow with better styling */}
           <button 
             onClick={scrollLeft} 
-            className="hidden lg:block p-2 rounded-full bg-gray-700 hover:bg-gray-600 mr-3 disabled:opacity-50 transition-colors" 
+            className="hidden lg:flex p-2 lg:p-3 rounded-full bg-gray-100 dark:bg-gray-700/80 hover:bg-gray-200 dark:hover:bg-gray-600/80 mr-3 disabled:opacity-50 transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg border border-gray-300 dark:border-gray-600/50 hover:border-gray-400 dark:hover:border-gray-500/50" 
             aria-label="Scroll left"
           >
-            <ChevronLeft className="h-5 w-5 text-gray-300" />
+            <ChevronLeft className="h-4 w-4 lg:h-5 lg:w-5 text-gray-300" />
           </button>
-          <div ref={storyBarRef} className="flex gap-3 lg:gap-4 overflow-x-auto scrollbar-hide pb-2 px-1 lg:px-0">
-            {/* Create story card */}
-            <div onClick={() => onCreateStory && onCreateStory()} className="flex-shrink-0 cursor-pointer">
+          
+          <div 
+            ref={storyBarRef} 
+            className="flex gap-3 lg:gap-4 overflow-x-auto scrollbar-hide pb-2 px-1 lg:px-0 scroll-smooth"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitScrollbar: { display: 'none' }
+            }}
+          >
+            {/* Enhanced Create story card */}
+            <div 
+              onClick={() => onCreateStory && onCreateStory()} 
+              className="flex-shrink-0 cursor-pointer transform hover:scale-105 transition-transform duration-200"
+            >
               <Story isCreateCard user={user} />
             </div>
-            {/* Other stories (skip 'Your story') */}
+            
+            {/* Enhanced story cards with stagger animation */}
             {stories.slice(1).map((story, index) => (
-              <div key={story.id} onClick={() => handleStoryClick(index + 1)} className="flex-shrink-0">
+              <div 
+                key={story.id} 
+                onClick={() => handleStoryClick(index + 1)} 
+                className="flex-shrink-0 transform hover:scale-105 transition-all duration-200"
+                style={{
+                  animationDelay: `${index * 0.1}s`,
+                  animation: loading ? 'none' : 'fadeInUp 0.6s ease-out forwards'
+                }}
+              >
                 <Story story={story} />
               </div>
             ))}
+            
+            {/* Show empty state when no stories */}
+            {stories.length <= 1 && !loading && (
+              <div className="flex-shrink-0 flex flex-col items-center justify-center w-32 lg:w-40 h-24 lg:h-32 rounded-xl border-2 border-dashed border-gray-600 text-gray-500 text-center p-2">
+                <div className="text-2xl mb-1 opacity-50">📷</div>
+                <span className="text-xs leading-tight">No stories yet</span>
+              </div>
+            )}
           </div>
-          {/* Right arrow - Hidden on mobile */}
+          
+          {/* Enhanced Right arrow with better styling */}
           <button 
             onClick={scrollRight} 
-            className="hidden lg:block p-2 rounded-full bg-gray-700 hover:bg-gray-600 ml-3 disabled:opacity-50 transition-colors" 
+            className="hidden lg:flex p-2 lg:p-3 rounded-full bg-gray-700/80 hover:bg-gray-600/80 ml-3 disabled:opacity-50 transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg backdrop-blur-sm border border-gray-600/50 hover:border-gray-500/50" 
             aria-label="Scroll right"
           >
-            <ChevronRight className="h-5 w-5 text-gray-300" />
+            <ChevronRight className="h-4 w-4 lg:h-5 lg:w-5 text-gray-300" />
           </button>
         </div>
       </div>
@@ -422,6 +532,7 @@ const StoriesContainer = ({ onCreateStory, refreshRef }) => {
             setCurrentStoryIndex(null);
             setCurrentSlideIndex(0);
           }}
+          onStoryDeleted={handleStoryDeleted}
         />
       )}
 

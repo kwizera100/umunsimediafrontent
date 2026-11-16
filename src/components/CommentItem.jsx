@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { addArticleComment, updateArticleComment, deleteArticleComment } from '../services/articleService';
 import { Reply, Edit, Trash2, Send, X, Check } from 'lucide-react';
+import Avatar from './Avatar';
+import UserDisplay from './UserDisplay';
 
-const BASE_URL = import.meta.env.VITE_SOCKET_URL || 'https://umuhuza.store';
+const BASE_URL = import.meta.env.VITE_SOCKET_URL || 'https://fggg.space';
 const defaultAvatar = '/default-avatar.png'; // Place a default avatar in public folder
 
 const CommentItem = ({ comment, articleId, depth = 0 }) => {
@@ -56,41 +58,21 @@ const CommentItem = ({ comment, articleId, depth = 0 }) => {
     return user.username || 'Unknown User';
   };
 
-  const getUserAvatar = (user) => {
-    if (!user) {
-      return 'https://ui-avatars.com/api/?name=Unknown&background=random';
-    }
-    if (user.avatar) {
-      if (user.avatar.startsWith('http')) {
-        return user.avatar;
-      }
-      if (user.avatar.startsWith('uploads/')) {
-        return `${BASE_URL}/${user.avatar}`;
-      }
-      if (user.avatar.startsWith('avatars/')) {
-        return `${BASE_URL}/uploads/${user.avatar}`;
-      }
-      return `${BASE_URL}/uploads/avatars/${user.avatar}`;
-    }
-    return `https://ui-avatars.com/api/?name=${getUserDisplayName(user)}&background=random`;
-  };
+  // Avatar handled by Avatar component
 
   return (
-    <div className={`flex items-start gap-4 ${depth > 0 ? 'ml-8 border-l-2 border-blue-500/30 bg-gray-700/30 rounded-xl py-3 px-4' : 'py-4'} group`}>
-      {/* Avatar */}
-      <img
-        src={getUserAvatar(comment.author)}
-        alt={getUserDisplayName(comment.author)}
-        className="w-10 h-10 rounded-full object-cover border-2 border-gray-600 shadow-lg hover:ring-2 hover:ring-blue-500 transition-all duration-200 cursor-pointer"
-      />
+    <div className={`flex items-start gap-4 ${depth > 0 ? 'ml-8 border-l-2 border-blue-500/30 bg-gray-100 dark:bg-gray-700/30 rounded-xl py-3 px-4' : 'py-4'} group`}>
+      {/* Author Display */}
       <div className="flex-1">
-        {/* Header */}
         <div className="flex items-center gap-2 mb-2">
-          <span className="font-semibold text-white hover:text-blue-400 cursor-pointer transition-colors">{getUserDisplayName(comment.author)}</span>
-          {comment.author?.username && (
-            <span className="text-xs text-gray-400">@{comment.author.username}</span>
-          )}
-          <span className="text-xs text-gray-500 ml-2">{new Date(comment.createdAt).toLocaleString()}</span>
+          <UserDisplay 
+            user={comment.author} 
+            size="sm"
+            showUsername={true}
+            showVerification={true}
+            linkToProfile={true}
+          />
+          <span className="text-xs text-gray-600 dark:text-gray-500 ml-2">{new Date(comment.createdAt).toLocaleString()}</span>
         </div>
         
         {/* Content */}
@@ -98,7 +80,7 @@ const CommentItem = ({ comment, articleId, depth = 0 }) => {
           <form onSubmit={handleEdit} className="flex gap-2 mb-3">
             <input
               type="text"
-              className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={editContent}
               onChange={e => setEditContent(e.target.value)}
               disabled={loading}
@@ -120,11 +102,11 @@ const CommentItem = ({ comment, articleId, depth = 0 }) => {
             </button>
           </form>
         ) : (
-          <div className="mb-3 text-gray-300 text-[15px] leading-relaxed whitespace-pre-line bg-gray-700/50 rounded-lg p-3 border border-gray-600">{comment.content}</div>
+          <div className="mb-3 text-gray-700 dark:text-gray-300 text-[15px] leading-relaxed whitespace-pre-line bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">{comment.content}</div>
         )}
         
         {/* Actions */}
-        <div className="flex gap-4 text-sm text-gray-400 mb-3">
+        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
           {user && (
             <button 
               onClick={() => setReplying(r => !r)} 
@@ -156,10 +138,10 @@ const CommentItem = ({ comment, articleId, depth = 0 }) => {
         
         {/* Reply form */}
         {replying && (
-          <form onSubmit={handleReply} className="flex gap-2 mb-3 bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+          <form onSubmit={handleReply} className="flex gap-2 mb-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
             <input
               type="text"
-              className="flex-1 bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={replyContent}
               onChange={e => setReplyContent(e.target.value)}
               disabled={loading}

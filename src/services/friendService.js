@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://umuhuza.store/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://fggg.space/api';
 
 // Create axios instance with auth token
 const createAxiosInstance = () => {
