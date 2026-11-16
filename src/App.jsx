@@ -8,6 +8,7 @@ import Register from './components/auth/Register';
 import Home from './pages/Home';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
+import PublicProfile from './pages/PublicProfile';
 import Friends from './pages/Friends';
 import Clubs from './pages/Clubs';
 import ClubDetail from './pages/ClubDetail';
@@ -50,6 +51,11 @@ function App() {
             <Route path="/friends" element={
               <ProtectedRoute>
                 <Friends />
+              </ProtectedRoute>
+            } />
+            <Route path="/users/:username" element={
+              <ProtectedRoute>
+                <PublicProfile />
               </ProtectedRoute>
             } />
             <Route path="/clubs" element={

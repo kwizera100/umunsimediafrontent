@@ -31,9 +31,13 @@ import {
   ArrowDown,
   BarChart,
   PieChart,
-  LineChart
+  LineChart,
+  Wallet,
+  Repeat2
 } from 'lucide-react';
 import userService from '../services/userService';
+import publicProfileService from '../services/publicProfileService';
+import ProfileContentTabs from './ProfileContentTabs';
 
 const UserProfile = () => {
   const { user, updateProfile, updateCoverImage, loading } = useAuth();
@@ -52,6 +56,9 @@ const UserProfile = () => {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState(null);
 
   // Update form data when user changes
   useEffect(() => {
@@ -140,6 +147,19 @@ const UserProfile = () => {
     });
     setAvatar(null);
     setAvatarPreview('');
+  };
+
+  const toggleBalance = async () => {
+    const next = !showBalance;
+    setShowBalance(next);
+    if (next && paymentHistory === null) {
+      try {
+        const history = await publicProfileService.getPaymentHistory();
+        setPaymentHistory(Array.isArray(history) ? history : []);
+      } catch {
+        setPaymentHistory([]);
+      }
+    }
   };
 
   const getPlanBadge = () => {
@@ -233,36 +253,19 @@ const UserProfile = () => {
     return { level: 'Low', color: 'text-red-400', bg: 'bg-red-600/20' };
   };
 
-  if (statsLoading) {
-    return (
-      <div className="space-y-8">
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <span className="ml-3 text-gray-400">Loading insights...</span>
-          </div>
-        </div>
+  const analyticsError = statsError ? (
+    <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-8">
+      <div className="text-center">
+        <p className="text-red-400">{statsError}</p>
+        <button 
+          onClick={() => setRefreshTrigger(prev => prev + 1)}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
-    );
-  }
-
-  if (statsError) {
-    return (
-      <div className="space-y-8">
-        <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-8">
-          <div className="text-center">
-            <p className="text-red-400">{statsError}</p>
-            <button 
-              onClick={() => setRefreshTrigger(prev => prev + 1)}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    </div>
+  ) : null;
 
   const activityLevel = getActivityLevel(getActivityScore());
   const recentActivity = getRecentActivity();
@@ -464,6 +467,85 @@ const UserProfile = () => {
         </div>
       </div>
 
+      {/* Action Bar — Facebook-style quick actions */}
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => setShowAnalytics(prev => !prev)}
+          className={`px-4 sm:px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 text-sm sm:text-base transition-colors ${
+            showAnalytics
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-800 text-gray-200 border border-gray-700 hover:bg-gray-700'
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          {showAnalytics ? 'Hide Analytics' : 'View Analytics'}
+        </button>
+        <button
+          onClick={toggleBalance}
+          className={`px-4 sm:px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 text-sm sm:text-base transition-colors ${
+            showBalance
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-800 text-gray-200 border border-gray-700 hover:bg-gray-700'
+          }`}
+        >
+          <Wallet className="h-4 w-4" />
+          Monetization
+        </button>
+      </div>
+
+      {/* Balance panel */}
+      {showBalance && (
+        <div className="bg-gradient-to-r from-green-900/40 via-gray-800 to-gray-800 rounded-xl border border-green-700/40 p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-green-400" /> My Balance
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
+              <p className="text-gray-400 text-xs mb-1">Available balance</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-400">
+                {user?.balance !== undefined && user?.balance !== null
+                  ? `${Number(user.balance).toLocaleString()} RWF`
+                  : '—'}
+              </p>
+            </div>
+            <div className="bg-gray-900/60 rounded-lg p-4 border border-gray-700">
+              <p className="text-gray-400 text-xs mb-1">Transactions</p>
+              <p className="text-2xl sm:text-3xl font-bold text-white">
+                {paymentHistory === null ? '…' : paymentHistory.length}
+              </p>
+            </div>
+          </div>
+          {paymentHistory && paymentHistory.length > 0 && (
+            <div className="mt-4 space-y-2 max-h-56 overflow-y-auto">
+              {paymentHistory.slice(0, 10).map((tx, i) => (
+                <div key={tx.id || i} className="flex items-center justify-between bg-gray-900/40 rounded-lg px-3 py-2 text-sm">
+                  <span className="text-gray-300 truncate">{tx.type || tx.description || tx.status || 'Payment'}</span>
+                  <span className="text-white font-medium ml-3">
+                    {tx.amount !== undefined ? `${Number(tx.amount).toLocaleString()} RWF` : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Content tabs: Posts / Reposts / Articles / Clubs / Rewards / Friends */}
+      <ProfileContentTabs userId={user?.id} isOwnProfile stats={stats} />
+
+      {showAnalytics && (
+      <>
+      {statsError ? analyticsError : null}
+      {statsLoading && (
+        <div className="bg-gray-800 rounded-xl border border-gray-700 p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <span className="ml-3 text-gray-400">Loading insights...</span>
+          </div>
+        </div>
+      )}
       {/* Quick Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <div className="bg-gradient-to-r from-gray-800/90 via-gray-700/90 to-gray-800/90 lg:from-gray-800 lg:via-gray-800 lg:to-gray-800 rounded-xl lg:rounded-xl border border-gray-600/60 lg:border-gray-700 p-4 sm:p-5 lg:p-6 hover:border-blue-500/50 transition-colors backdrop-blur-sm">
@@ -933,6 +1015,8 @@ const UserProfile = () => {
           Refresh Insights
         </button>
       </div>
+      </>
+      )}
     </div>
   );
 };
