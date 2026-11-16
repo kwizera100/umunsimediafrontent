@@ -1,22 +1,44 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-const VerificationBadge = ({ 
-  size = 'sm', 
-  color = '#0084FF',
+// Builds a smooth scalloped seal (Facebook-style verified rosette):
+// alternating outer/inner radius points joined by quadratic curves
+// so peaks and valleys are both rounded.
+const buildSealPath = (points = 14) => {
+  const cx = 12, cy = 12, rOuter = 10.9, rInner = 8.9;
+  const pts = [];
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const a = (Math.PI * i) / points - Math.PI / 2;
+    pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+  }
+  const mid = (a, b) => `${((a[0] + b[0]) / 2).toFixed(2)} ${((a[1] + b[1]) / 2).toFixed(2)}`;
+  let d = `M ${mid(pts[0], pts[pts.length - 1])}`;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const next = pts[(i + 1) % pts.length];
+    d += ` Q ${p[0].toFixed(2)} ${p[1].toFixed(2)} ${mid(p, next)}`;
+  }
+  return d + ' Z';
+};
+
+const VerificationBadge = ({
+  size = 'sm',
+  color = '#0866FF',
   className = '',
   showTooltip = true
 }) => {
   const [showTip, setShowTip] = useState(false);
+  const sealPath = useMemo(() => buildSealPath(), []);
 
   const sizeClasses = {
-    sm: 'h-[18px] w-[18px]',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
-    xl: 'h-7 w-7'
+    sm: 'h-[20px] w-[20px]',
+    md: 'h-[22px] w-[22px]',
+    lg: 'h-7 w-7',
+    xl: 'h-8 w-8'
   };
 
   return (
-    <span 
+    <span
       className={`relative inline-flex items-center ${className}`}
       onMouseEnter={() => setShowTip(true)}
       onMouseLeave={() => setShowTip(false)}
@@ -24,27 +46,18 @@ const VerificationBadge = ({
       <svg
         viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg"
-        className={`${sizeClasses[size]}`}
+        className={`${sizeClasses[size]} drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]`}
         fill="none"
         aria-label="Verified Account"
         role="img"
       >
-        <defs>
-          <filter id="meta-badge-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="rgba(0,0,0,0.15)"/>
-          </filter>
-        </defs>
-        {/* 16-point scalloped starburst circle */}
+        {/* Scalloped seal */}
+        <path d={sealPath} fill={color} />
+        {/* White checkmark */}
         <path
-          d="M12 2L13.5 3.5L15.6 2.8L16.5 4.8L18.7 4.5L19 6.6L21 7.2L20.5 9.2L22 10.5L21 12L22 13.5L20.5 14.8L21 16.8L19 17.4L18.7 19.5L16.5 19.2L15.6 21.2L13.5 20.5L12 22L10.5 20.5L8.4 21.2L7.5 19.2L5.3 19.5L5 17.4L3 16.8L3.5 14.8L2 13.5L3 12L2 10.5L3.5 9.2L3 7.2L5 6.6L5.3 4.5L7.5 4.8L8.4 2.8L10.5 3.5Z"
-          fill={color}
-          filter="url(#meta-badge-shadow)"
-        />
-        {/* White checkmark - 45deg angle, thick rounded caps */}
-        <path
-          d="M8 12.5L10.5 15L16 9.5"
+          d="M7.7 12.4L10.8 15.5L16.5 9.4"
           stroke="#FFFFFF"
-          strokeWidth="2.5"
+          strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
