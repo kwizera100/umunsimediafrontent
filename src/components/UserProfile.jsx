@@ -37,12 +37,14 @@ import {
   Upload,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from 'lucide-react';
 import userService from '../services/userService';
 import { mediaHouseService } from '../services/mediaHouseService';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import analyticsService from '../services/analyticsService';
+import ProfileContentTabs from './ProfileContentTabs';
 import UserRewardsProfile from './UserRewardsProfile';
 import UserDisplay from './UserDisplay';
 import toast from 'react-hot-toast';
@@ -71,6 +73,7 @@ const UserProfile = () => {
   const [savingPrice, setSavingPrice] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showMonetization, setShowMonetization] = useState(false);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [showVerificationForm, setShowVerificationForm] = useState(false);
@@ -490,6 +493,17 @@ const UserProfile = () => {
                     {showAnalytics ? 'Hide Analytics' : 'View Analytics'}
                   </button>
                   <button
+                    onClick={() => setShowMonetization(!showMonetization)}
+                    className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base ${
+                      showMonetization 
+                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <Wallet className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Monetization
+                  </button>
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                   >
@@ -583,6 +597,11 @@ const UserProfile = () => {
         </div>
       </div>
 
+      {/* Content tabs: Posts / Reposts / Articles / Clubs / Rewards / Friends */}
+      <ProfileContentTabs userId={user?.id} isOwnProfile stats={stats} />
+
+      {showMonetization && (
+      <>
       {/* Premium Plan Card */}
       {(() => {
         const isPremium =
@@ -846,6 +865,9 @@ const UserProfile = () => {
         </div>
       )}
 
+      </>
+      )}
+
       {/* Student Verification Section - Only show if NOT approved */}
       {user?.isStudent && user?.studentVerificationStatus !== 'APPROVED' && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl lg:rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xl">
@@ -1021,6 +1043,8 @@ const UserProfile = () => {
         </div>
       )}
 
+      {showAnalytics && (
+      <>
       {/* Quick Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 hover:border-blue-400 dark:hover:border-blue-500/50 transition-colors shadow-sm">
@@ -1497,6 +1521,9 @@ const UserProfile = () => {
             )}
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {/* Rewards & Achievements */}
