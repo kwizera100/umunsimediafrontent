@@ -45,9 +45,10 @@ const UserDisplay = ({
 
   const getUserAvatar = (user) => {
     if (user.avatar) {
-      return user.avatar.startsWith('http') 
-        ? user.avatar 
-        : `https://fggg.space/uploads/${user.avatar}`;
+      const base = (import.meta.env.VITE_SOCKET_URL || 'https://writerapi.umunsi.com').replace(/\/+$/, '');
+      return user.avatar.startsWith('http')
+        ? user.avatar
+        : `${base}/uploads/${user.avatar}`;
     }
     return null;
   };

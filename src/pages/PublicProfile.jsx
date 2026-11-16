@@ -279,9 +279,10 @@ const PublicProfile = ({ username: propUsername, embedded = false }) => {
 
   const getImageUrl = (url) => {
     if (!url) return null;
+    const base = (import.meta.env.VITE_SOCKET_URL || 'https://writerapi.umunsi.com').replace(/\/+$/, '');
     return url.startsWith("http")
       ? url
-      : `https://fggg.space/${url.replace(/^\/+/, "")}`;
+      : `${base}/${url.replace(/^\/+/, "")}`;
   };
 
   const handleToggleLike = async (postId) => {
