@@ -169,8 +169,11 @@ const MediaHouseProfile = () => {
                   )}
                   {house.status === 'verified' && house.claimant && (
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Managed by {house.claimant.firstName} {house.claimant.lastName}
+                      <p className="text-sm sm:text-base text-gray-800 dark:text-gray-200">
+                        Managed by{' '}
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {house.claimant.firstName} {house.claimant.lastName}
+                        </span>
                       </p>
                     </div>
                   )}
