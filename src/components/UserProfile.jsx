@@ -45,7 +45,6 @@ import { mediaHouseService } from '../services/mediaHouseService';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import analyticsService from '../services/analyticsService';
 import ProfileContentTabs from './ProfileContentTabs';
-import UserRewardsProfile from './UserRewardsProfile';
 import UserDisplay from './UserDisplay';
 import toast from 'react-hot-toast';
 
@@ -361,21 +360,6 @@ const UserProfile = () => {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* Analytics Dashboard */}
-      {showAnalytics && user?.id && (
-        <div className="mb-8">
-          {analyticsLoading ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading analytics...</span>
-              </div>
-            </div>
-          ) : (
-            <AnalyticsDashboard userId={user.id} timeframe="30d" />
-          )}
-        </div>
-      )}
       {/* Profile Header Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl lg:rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xl">
         {/* Cover Image */}
@@ -1045,6 +1029,21 @@ const UserProfile = () => {
 
       {showAnalytics && (
       <>
+      {/* Analytics Dashboard — everything analytics lives under View Analytics */}
+      {user?.id && (
+        <div className="mb-8">
+          {analyticsLoading ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading analytics...</span>
+              </div>
+            </div>
+          ) : (
+            <AnalyticsDashboard userId={user.id} timeframe="30d" />
+          )}
+        </div>
+      )}
       {/* Quick Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 hover:border-blue-400 dark:hover:border-blue-500/50 transition-colors shadow-sm">
@@ -1524,13 +1523,6 @@ const UserProfile = () => {
       )}
 
       </>
-      )}
-
-      {/* Rewards & Achievements */}
-      {user?.id && (
-        <div className="mb-8">
-          <UserRewardsProfile userId={user.id} />
-        </div>
       )}
 
       {/* Refresh Button */}
