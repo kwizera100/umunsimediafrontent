@@ -130,11 +130,11 @@ const PaymentModal = ({ isOpen, onClose, plan, planPrice, user }) => {
     const selectedMethod = paymentMethods.find((m) => m.id === selectedPaymentMethod);
 
     // Validate phone number - K-Pay requires msisdn for ALL payment methods
-    // Format: 2507XXXXXXXX (MTN) or 2503XXXXXXXX (Airtel)
+    // Format: 2507XXXXXXXX (MTN MoMo only)
     if (!paymentFormData.msisdn) {
       errors.msisdn = "Phone number is required for all payment methods";
-    } else if (!/^250[37]\d{8}$/.test(paymentFormData.msisdn)) {
-      errors.msisdn = "Phone number must be in format 2507XXXXXXXX (MTN) or 2503XXXXXXXX (Airtel)";
+    } else if (!/^2507\d{8}$/.test(paymentFormData.msisdn)) {
+      errors.msisdn = "Mobile Money payments require an MTN number (2507XXXXXXXX). Airtel numbers are not supported.";
     }
 
     // Validate card details (only for Credit Card) - Optional, K-Pay will collect on checkout
