@@ -18,6 +18,7 @@ import {
   BookOpen,
   Bell,
   Building2,
+  ShoppingBag,
   Newspaper,
 } from "lucide-react";
 import Logo from "../assets/Logo.png";
@@ -179,6 +180,7 @@ const Sidebar = ({
     { name: "Friends", href: "/friends", icon: Users, badge: null },
     { name: "Clubs", href: "/clubs", icon: Hash, badge: null },
     { name: "Articles", href: "/articles", icon: BookOpen, badge: null },
+    { name: "Marketplace", href: "/marketplace", icon: ShoppingBag, badge: null },
     { name: "Media Houses", href: "/media-houses", icon: Building2, badge: null },
     { name: "Sell Article", href: "/sell-article", icon: Newspaper, badge: null },
     { name: "Settings", href: "/settings", icon: Settings, badge: null },

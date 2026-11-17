@@ -19,6 +19,7 @@ import Friends from "./pages/Friends";
 import Clubs from "./pages/Clubs";
 import ClubDetail from "./pages/ClubDetail";
 import Articles from "./pages/Articles";
+import Marketplace from "./pages/Marketplace";
 import ArticleView from "./components/ArticleView";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
@@ -129,6 +130,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/marketplace" element={<Marketplace />} />
             <Route
               path="/articles"
               element={
